@@ -1,0 +1,108 @@
+[
+  {
+    "id": "supported_01",
+    "type": "supported",
+    "question": "What proportion of Microsoft 365 Copilot chat use supports analysis, decisions, and problem-solving according to the 2026 Work Trend Index?",
+    "expected_keywords": [
+      "49%",
+      "nearly half",
+      "analysis",
+      "decisions",
+      "problem-solving"
+    ],
+    "notes": "Direct factual retrieval test verifying baseline precision for explicit numeric metrics."
+  },
+  {
+    "id": "supported_paraphrase_01",
+    "type": "supported",
+    "question": "How much of Copilot's chat activity is dedicated to analyzing data, making choices, and solving issues in the 2026 report?",
+    "expected_keywords": [
+      "49%"
+    ],
+    "notes": "Semantic search evaluation test to ensure vocabulary variations map to the same target facts."
+  },
+  {
+    "id": "supported_boundary_01",
+    "type": "supported",
+    "question": "In the METR study on early-2025 AI impact, what exact percentage change in completion time was observed when developers used AI tools, and how did that compare to their prior forecasts?",
+    "expected_keywords": [
+      "19%",
+      "increase",
+      "slowdown",
+      "24%",
+      "forecast"
+    ],
+    "notes": "Boundary test evaluating exact numbers, directionality (slowdown vs speedup), and paired comparisons."
+  },
+  {
+    "id": "supported_multi_doc_01",
+    "type": "supported",
+    "question": "According to the 2026 State of Code Developer Survey, what concerns about AI-generated code may affect code quality and maintainability?",
+    "expected_keywords": [
+      "isn't reliable",
+      "too many lines of code",
+      "technical debt",
+      "lack of context"
+    ],
+    "notes": "Checks for concerns explicitly described in the available 2026 State of Code Developer Survey."
+  },
+  {
+    "id": "ambiguous_01",
+    "type": "ambiguous",
+    "question": "How do the METR study and the Economics of AI Jobs report describe AI's productivity impact on workers and developers?",
+    "expected_keywords": [
+      "19%",
+      "24%",
+      "productivity",
+      "forecast"
+    ],
+    "notes": "Tests a comparison between sources present in the project; the METR study reports slower completion time while the economics report describes perceived productivity gains."
+  },
+  {
+    "id": "ambiguous_scope_01",
+    "type": "ambiguous",
+    "question": "What were the adoption metrics for the new AI tools last quarter?",
+    "expected_keywords": [
+      "clarification needed",
+      "organization",
+      "tool name"
+    ],
+    "notes": "Underspecified query test to check whether the system requests clarification or bounded assumptions rather than guessing."
+  },
+  {
+    "id": "retrieval_failure_01",
+    "type": "retrieval_failure",
+    "question": "What custom slash commands do security engineering teams use, and what percentage of total implementations in the monorepo do they represent?",
+    "expected_keywords": [
+      "50%",
+      "security engineering",
+      "slash command"
+    ],
+    "notes": "Dense context recall test focused on deeply nested or domain-specific sub-sections."
+  },
+  {
+    "id": "hallucination_01",
+    "type": "hallucination",
+    "question": "How did the Legal team at Anthropic fix the Kubernetes pod IP address exhaustion issue using Claude Code?",
+    "expected_keywords": [
+      "Data Infrastructure",
+      "not Legal"
+    ],
+    "notes": "Cross-entity boundary test pairing one team with another team's actions to ensure the generator doesn't fabricate connections."
+  },
+  {
+    "id": "unsupported_01",
+    "type": "unsupported",
+    "question": "What was the exact financial valuation of Anthropic following the release of Claude Code in 2026?",
+    "expected_keywords": [],
+    "notes": "Guardrail test verifying that out-of-knowledge queries trigger graceful 'information not provided' disclosures."
+  },
+  {
+    "id": "unsupported_temporal_01",
+    "type": "unsupported",
+    "question": "What are the projected enterprise feature additions scheduled for Claude Code in Q4 2027?",
+    "expected_keywords": [],
+    "notes": "Temporal out-of-bounds test to verify resistance to speculating beyond the present dataset scope."
+  }
+]
+  
