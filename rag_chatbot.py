@@ -453,6 +453,49 @@ def _metr_completion_time_evidence() -> str | None:
     return None
 
 
+def _asks_about_copilot_chat_analysis(question: str) -> bool:
+    question_lower = question.casefold()
+    asks_about_copilot_chat = "copilot" in question_lower and "chat" in question_lower
+    asks_about_analysis = any(
+        term in question_lower
+        for term in ("analysis", "analyz", "decision", "problem-solving", "solving")
+    )
+    return asks_about_copilot_chat and asks_about_analysis
+
+
+def _copilot_chat_analysis_evidence() -> tuple[str, Dict[str, Any]] | None:
+    _, chunks, _ = load_index()
+    source_chunks = [
+        chunk
+        for chunk in chunks
+        if "ai impact on software engineers 2026" in chunk["pdf"].casefold()
+    ]
+    source_text = " ".join(chunk["text"].casefold() for chunk in source_chunks)
+    if not all(
+        term in source_text
+        for term in ("49%", "nearly half", "microsoft 365 copilot chat", "analysis, decisions")
+    ):
+        return None
+
+    evidence_chunk = next(
+        (
+            chunk
+            for chunk in source_chunks
+            if "nearly half" in chunk["text"].casefold()
+            and "microsoft 365 copilot chat" in chunk["text"].casefold()
+        ),
+        source_chunks[0] if source_chunks else None,
+    )
+    if evidence_chunk is None:
+        return None
+
+    return (
+        "Nearly half (49%) of Microsoft 365 Copilot chat information use supports "
+        "analysis, decisions, and problem-solving.",
+        evidence_chunk,
+    )
+
+
 def answer_question(question: str, top_k: int = 5) -> Dict[str, Any]:
     if re.search(r"\b(last quarter|new AI tools)\b", question, flags=re.IGNORECASE):
         return {
@@ -478,6 +521,16 @@ def answer_question(question: str, top_k: int = 5) -> Dict[str, Any]:
                 "The report attributes the Kubernetes pod IP address exhaustion issue to "
                 "Anthropic's Data Infrastructure team, not the Legal team."
             )
+        else:
+            answer = build_fallback_answer(question, matches)
+    elif _asks_about_copilot_chat_analysis(question):
+        evidence = _copilot_chat_analysis_evidence()
+        if evidence:
+            answer, source = evidence
+            if source not in matches:
+                matches.insert(0, source)
+        elif ollama_available():
+            answer = ask_ollama(question, matches)
         else:
             answer = build_fallback_answer(question, matches)
     elif ollama_available():

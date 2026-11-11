@@ -1,6 +1,13 @@
 from pathlib import Path
 
-from rag_chatbot import PDF_DIR, build_fallback_answer, chunk_text, list_pdfs, retrieve_documents
+from rag_chatbot import (
+    PDF_DIR,
+    answer_question,
+    build_fallback_answer,
+    chunk_text,
+    list_pdfs,
+    retrieve_documents,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -93,3 +100,51 @@ def test_retrieval_prioritizes_concerns_in_named_survey(monkeypatch):
     monkeypatch.setattr("rag_chatbot.load_index", lambda: (Index(), chunks, Model()))
 
     assert retrieve_documents(question, top_k=1) == [target]
+
+
+def test_copilot_chat_analysis_answers_use_named_report_evidence(monkeypatch):
+    source_chunk = {
+        "pdf": "AI Impact on Software Engineers 2026.pdf",
+        "chunk_index": 9,
+        "text": (
+            "Nearly half of Microsoft 365 Copilot chat information use supports "
+            "analysis, decisions, and problem-solving."
+        ),
+    }
+    unrelated_chunk = {
+        "pdf": "state-of-code-developer-survey-report.pdf",
+        "chunk_index": 18,
+        "text": "Survey results about coding tools.",
+    }
+    index_chunks = [
+        {
+            "pdf": "AI Impact on Software Engineers 2026.pdf",
+            "chunk_index": 8,
+            "text": "The chart identifies 49% of Copilot chat use as high-value work.",
+        },
+        source_chunk,
+    ]
+    monkeypatch.setattr(
+        "rag_chatbot.load_index",
+        lambda: (None, index_chunks, None),
+    )
+    monkeypatch.setattr(
+        "rag_chatbot.retrieve_documents",
+        lambda _question, top_k=5: [unrelated_chunk],
+    )
+
+    questions = [
+        (
+            "What proportion of Microsoft 365 Copilot chat use supports analysis, "
+            "decisions, and problem-solving according to the 2026 Work Trend Index?"
+        ),
+        (
+            "How much of Copilot's chat activity is dedicated to analyzing data, "
+            "making choices, and solving issues in the 2026 report?"
+        ),
+    ]
+    for question in questions:
+        result = answer_question(question)
+        assert "49%" in result["answer"]
+        assert "analysis" in result["answer"].casefold()
+        assert source_chunk in result["sources"]
