@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from rag_chatbot import PDF_DIR, build_fallback_answer, chunk_text, list_pdfs
+from rag_chatbot import PDF_DIR, build_fallback_answer, chunk_text, list_pdfs, retrieve_documents
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -24,3 +24,72 @@ def test_chunk_text_normalizes_and_overlaps_text():
 
 def test_fallback_answer_handles_empty_context():
     assert "could not find relevant context" in build_fallback_answer("question", [])
+
+
+def test_retrieval_finds_lexical_match_outside_vector_candidates(monkeypatch):
+    question = (
+        "What proportion of Microsoft 365 Copilot chat use supports analysis, "
+        "decisions, and problem-solving according to the 2026 Work Trend Index?"
+    )
+    chunks = [
+        {"pdf": "unrelated.pdf", "chunk_index": index, "text": "General software development content"}
+        for index in range(8)
+    ]
+    target = {
+        "pdf": "AI Impact on Software Engineers 2026.pdf",
+        "chunk_index": 8,
+        "text": (
+            "Nearly half of Microsoft 365 Copilot chat information use supports "
+            "analysis, decisions, and problem-solving. 49% supports high-value work."
+        ),
+    }
+    chunks.append(target)
+
+    class Index:
+        def search(self, _embedding, count):
+            return [[float(index) for index in range(count)]], [list(range(count))]
+
+    class Model:
+        def encode(self, *_args, **_kwargs):
+            return [[0.0]]
+
+    monkeypatch.setattr("rag_chatbot.load_index", lambda: (Index(), chunks, Model()))
+
+    assert retrieve_documents(question, top_k=1) == [target]
+
+
+def test_retrieval_prioritizes_concerns_in_named_survey(monkeypatch):
+    question = (
+        "According to the 2026 State of Code Developer Survey, what concerns "
+        "about AI-generated code may affect code quality and maintainability?"
+    )
+    chunks = [
+        {
+            "pdf": "state-of-code-developer-survey-report.pdf",
+            "chunk_index": index,
+            "text": "The State of Code Developer Survey report provides an overview.",
+        }
+        for index in range(8)
+    ]
+    target = {
+        "pdf": "state-of-code-developer-survey-report.pdf",
+        "chunk_index": 8,
+        "text": (
+            'Concerns include AI code that "looks correct but isn\'t reliable" '
+            'and "too many lines of code are being generated with AI".'
+        ),
+    }
+    chunks.append(target)
+
+    class Index:
+        def search(self, _embedding, count):
+            indices = [8] + list(range(count - 1))
+            return [[float(index) for index in range(count)]], [indices]
+
+    class Model:
+        def encode(self, *_args, **_kwargs):
+            return [[0.0]]
+
+    monkeypatch.setattr("rag_chatbot.load_index", lambda: (Index(), chunks, Model()))
+
+    assert retrieve_documents(question, top_k=1) == [target]
