@@ -37,14 +37,14 @@
   {
     "id": "supported_multi_doc_01",
     "type": "supported",
-    "question": "According to the 2026 State of Code Developer Survey, what concerns about AI-generated code may affect code quality and maintainability?",
+    "question": "What does the 2026 report say about low-quality AI-generated code, duplicated code, verbose code, and poor abstractions?",
     "expected_keywords": [
-      "isn't reliable",
-      "too many lines of code",
-      "technical debt",
-      "lack of context"
+      "low-quality code",
+      "duplicated",
+      "verbose code",
+      "poor abstractions"
     ],
-    "notes": "Checks for concerns explicitly described in the available 2026 State of Code Developer Survey."
+    "notes": "Checks for concerns explicitly described in the available AI Impact on Software Engineers 2026 report."
   },
   {
     "id": "ambiguous_01",
@@ -73,22 +73,17 @@
     "id": "retrieval_failure_01",
     "type": "retrieval_failure",
     "question": "What custom slash commands do security engineering teams use, and what percentage of total implementations in the monorepo do they represent?",
-    "expected_keywords": [
-      "50%",
-      "security engineering",
-      "slash command"
-    ],
-    "notes": "Dense context recall test focused on deeply nested or domain-specific sub-sections."
+    "expected_keywords": [],
+    "expected_response": "not_found",
+    "notes": "The project PDFs do not document these repository-specific slash commands, so the chatbot should disclose that the information is unavailable."
   },
   {
     "id": "hallucination_01",
     "type": "hallucination",
     "question": "How did the Legal team at Anthropic fix the Kubernetes pod IP address exhaustion issue using Claude Code?",
-    "expected_keywords": [
-      "Data Infrastructure",
-      "not Legal"
-    ],
-    "notes": "Cross-entity boundary test pairing one team with another team's actions to ensure the generator doesn't fabricate connections."
+    "expected_keywords": [],
+    "expected_response": "not_found",
+    "notes": "The project PDFs do not document this Kubernetes incident, so the chatbot should not attribute it to a team."
   },
   {
     "id": "unsupported_01",

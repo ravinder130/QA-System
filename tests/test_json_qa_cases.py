@@ -44,9 +44,9 @@ def test_chatbot_against_json_case(case):
     normalized_answer = answer.casefold()
     case_type = case["type"]
 
-    if case_type == "unsupported":
+    if case_type == "unsupported" or case.get("expected_response") == "not_found":
         assert any(phrase in normalized_answer for phrase in REFUSAL_PHRASES), (
-            f"{case['id']}: expected an explicit unsupported-question response; "
+            f"{case['id']}: expected an explicit unavailable-information response; "
             f"got: {answer}"
         )
         return

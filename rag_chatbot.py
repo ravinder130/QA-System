@@ -369,6 +369,26 @@ def build_fallback_answer(question: str, context_chunks: List[Dict[str, Any]]) -
     )
 
 
+def _has_relevant_context(question: str, context_chunks: List[Dict[str, Any]]) -> bool:
+    source_terms = _source_title_terms(question)
+    question_terms = {
+        term
+        for term in re.findall(r"[a-z0-9%]+", question.casefold())
+        if len(term) > 2
+        and term not in RETRIEVAL_STOP_WORDS
+        and term not in source_terms
+    }
+    if not question_terms:
+        return False
+
+    for chunk in context_chunks:
+        chunk_terms = set(re.findall(r"[a-z0-9%]+", chunk["text"].casefold()))
+        overlap = len(question_terms & chunk_terms)
+        if overlap >= 2 and overlap / len(question_terms) >= 0.3:
+            return True
+    return False
+
+
 def _unsupported_response(question: str, context_chunks: List[Dict[str, Any]]) -> str | None:
     question_lower = question.casefold()
 
@@ -522,7 +542,7 @@ def answer_question(question: str, top_k: int = 5) -> Dict[str, Any]:
                 "Anthropic's Data Infrastructure team, not the Legal team."
             )
         else:
-            answer = build_fallback_answer(question, matches)
+            answer = "That information is not explicitly mentioned in the provided PDFs."
     elif _asks_about_copilot_chat_analysis(question):
         evidence = _copilot_chat_analysis_evidence()
         if evidence:
@@ -533,6 +553,8 @@ def answer_question(question: str, top_k: int = 5) -> Dict[str, Any]:
             answer = ask_ollama(question, matches)
         else:
             answer = build_fallback_answer(question, matches)
+    elif not _has_relevant_context(question, matches):
+        answer = "That information is not explicitly mentioned in the provided PDFs."
     elif ollama_available():
         answer = ask_ollama(question, matches)
     else:
