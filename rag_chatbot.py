@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -137,20 +138,19 @@ def build_index() -> tuple[faiss.Index, List[Dict[str, Any]], SentenceTransforme
     return index, chunks, model
 
 
-def _pdf_signatures(pdf_files: List[Path]) -> Dict[str, Dict[str, int]]:
-    signatures = {
-        path.name: {
-            "size": path.stat().st_size,
-            "modified_ns": path.stat().st_mtime_ns,
-        }
-        for path in pdf_files
-    }
+def _file_signature(path: Path) -> Dict[str, Any]:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for block in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(block)
+    return {"size": path.stat().st_size, "sha256": digest.hexdigest()}
+
+
+def _pdf_signatures(pdf_files: List[Path]) -> Dict[str, Dict[str, Any]]:
+    signatures = {path.name: _file_signature(path) for path in pdf_files}
     ocr_script = ROOT_DIR / "ocr_pdf.swift"
     if ocr_script.exists():
-        signatures["__ocr_script__"] = {
-            "size": ocr_script.stat().st_size,
-            "modified_ns": ocr_script.stat().st_mtime_ns,
-        }
+        signatures["__ocr_script__"] = _file_signature(ocr_script)
     return signatures
 
 

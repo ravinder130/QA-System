@@ -1,7 +1,9 @@
+import os
 from pathlib import Path
 
 from rag_chatbot import (
     PDF_DIR,
+    _pdf_signatures,
     answer_question,
     build_fallback_answer,
     chunk_text,
@@ -19,6 +21,18 @@ def test_pdf_directory_is_configured_in_project():
 
 def test_pdf_directory_contains_source_documents():
     assert list_pdfs(PDF_DIR)
+
+
+def test_pdf_signatures_ignore_file_timestamps_but_detect_content_changes(tmp_path):
+    source = tmp_path / "source.pdf"
+    source.write_bytes(b"first version")
+    signature = _pdf_signatures([source])
+
+    os.utime(source, ns=(1_600_000_000_000_000_000, 1_600_000_000_000_000_000))
+    assert _pdf_signatures([source]) == signature
+
+    source.write_bytes(b"updated version")
+    assert _pdf_signatures([source]) != signature
 
 
 def test_chunk_text_normalizes_and_overlaps_text():
